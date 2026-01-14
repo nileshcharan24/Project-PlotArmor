@@ -97,6 +97,19 @@ def main():
         step += 1
 
     pbar.close()
+    print(f"Training complete. Results saved to: {logger.filename}")
+    print(f"Best model saved to: {checkpoint_path}")
+
+    # Copy to Kaggle working for download if in Kaggle
+    if os.path.exists('/kaggle/working'):
+        import shutil
+        kaggle_output = f"/kaggle/working/{os.path.basename(logger.filename)}"
+        shutil.copy(logger.filename, kaggle_output)
+        print(f"CSV copied to Kaggle output: {kaggle_output}")
+        if os.path.exists(checkpoint_path):
+            model_output = f"/kaggle/working/{os.path.basename(checkpoint_path)}"
+            shutil.copy(checkpoint_path, model_output)
+            print(f"Model copied to Kaggle output: {model_output}")
 
 
 if __name__ == "__main__":

@@ -13,7 +13,9 @@
 - 2026-01-14: Updated project_context.md directory structure
 - 2026-01-14: Downloaded TinyStories dataset (1.9GB train, 19MB val)
 - 2026-01-14: Tested real training on Kaggle: BDH PPL=27k, GPT2 PPL=22k after 3 epochs
+- 2026-01-14: Replaced WandB with timestamped CSV logging in results/ folder
+- 2026-01-14: Added automatic file copying to Kaggle working dir for download
 
 ## Current Status
 
-Full Proof of Concept complete. TinyStories training functional. BDH shows competitive perplexity vs GPT-2. Ready for extended training and analysis.
+Long training pipeline ready. CSV logging with timestamps, automatic Kaggle downloads. Run extended training on Kaggle, download results for analysis.
