@@ -21,8 +21,8 @@ __pycache__/
 data/
 
 # Logs
-research/logs/*.csv
-research/logs/*.png
+research/results/*.csv
+research/results/*.png
 
 # Build directories
 app/client/dist

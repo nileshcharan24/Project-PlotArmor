@@ -42,7 +42,7 @@ def main():
 
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
-    logger = CSVLogger("research/logs/training_log.csv")
+    logger = CSVLogger()
 
     model.train()
     step = 0

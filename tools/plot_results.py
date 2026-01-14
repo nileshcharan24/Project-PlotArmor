@@ -39,4 +39,10 @@ def plot_results(csv_path: str, save_path: str):
 
 
 if __name__ == "__main__":
-    plot_results("research/logs/training_log.csv", "research/logs/training_curve.png")
+    import glob
+    csv_files = glob.glob("research/results/training_log_*.csv")
+    if csv_files:
+        latest_csv = max(csv_files, key=os.path.getctime)
+        plot_results(latest_csv, f"research/results/training_curve_{os.path.basename(latest_csv).replace('.csv', '.png')}")
+    else:
+        print("No CSV files found in research/results/")
