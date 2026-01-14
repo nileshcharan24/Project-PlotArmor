@@ -1,0 +1,29 @@
+# Virtual environments
+venv/
+
+# Node modules
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+
+# Model weights and checkpoints
+*.pt
+*.pth
+
+# Data directories
+data/
+
+# Build directories
+app/client/dist
+app/server/dist
+
+# OS files
+.DS_Store
+Thumbs.db
