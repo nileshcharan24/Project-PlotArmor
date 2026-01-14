@@ -7,9 +7,9 @@ import argparse
 import os
 import torch
 import torch.nn.functional as F
-from config import DEFAULT_MODEL, MODEL_CONFIGS
-from model_factory import create_model
-from dataset import get_dataloaders
+from research.config.model_config import DEFAULT_MODEL, MODEL_CONFIGS
+from research.model import create_model
+from research.utils.dataset import get_dataloaders
 
 
 def main():

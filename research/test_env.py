@@ -3,8 +3,8 @@ Test script to verify dynamic model switching, parameter counts, and dummy forwa
 """
 
 import torch
-from config import MODEL_CONFIGS
-from model_factory import create_model
+from .config.model_config import MODEL_CONFIGS
+from .model import create_model
 
 
 def main():

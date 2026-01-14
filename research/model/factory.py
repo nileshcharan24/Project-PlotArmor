@@ -2,8 +2,8 @@
 Model factory for dynamic instantiation of BDH or GPT-2 models.
 """
 
-from model_bdh import BDH_GPU
-from model_gpt2 import get_baseline_gpt2
+from .bdh import BDH_GPU
+from .gpt2 import get_baseline_gpt2
 from typing import Dict, Any
 
 

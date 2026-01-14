@@ -123,14 +123,42 @@ class LinearAttention(nn.Module):
 This section acts as the living map of the project. Update immediately upon file creation/deletion.
 
 /
-├── app/                  
+├── .clinerules           # System Prompts & Workflow Rules
+├── .gitignore            # Git ignore rules
+├── .roomodes             # Mode definitions
+├── app/
 │   ├── client/           # React Frontend
 │   └── server/           # Node.js/Express Backend
-├── research/             # Model Development & Experimentation
-│   ├── config.py         # Global Toggle (Local vs Kaggle)
-│   ├── data/             # Datasets (.txt, .csv)
-│   └── models/           # Saved Checkpoints (.pt)
-├── .clinerules           # System Prompts & Workflow Rules
-├── requirements.txt      # Python Dependencies
+│       └── index.js      # Express server
+├── config.py             # Root config
+├── dist/                 # Bundled code for Kaggle (generated)
 ├── project_context.md    # Source of Truth (Architecture, Math, Structure)
-└── scratchpad.md         # Active Context & Planning
+├── requirements.txt      # Python Dependencies
+├── scratchpad.md         # Active Context & Planning
+├── research/             # Model Development & Experimentation
+│   ├── compare_models.py # Model comparison script
+│   ├── test_env.py       # Environment test
+│   ├── test_train.py     # Training test
+│   ├── config/           # Configuration
+│   │   ├── __init__.py
+│   │   └── model_config.py
+│   ├── data/             # Datasets
+│   │   └── dummy.txt     # Test data
+│   ├── inference/        # Inference utilities
+│   │   ├── __init__.py
+│   │   └── generator.py  # Text generation
+│   ├── metrics/          # Evaluation metrics
+│   │   ├── __init__.py
+│   │   └── evaluation.py # Perplexity, BLEU, etc.
+│   ├── model/            # Model implementations
+│   │   ├── __init__.py
+│   │   ├── bdh.py        # BDH model
+│   │   ├── factory.py    # Model factory
+│   │   └── gpt2.py       # GPT-2 baseline
+│   ├── utils/            # Utilities
+│   │   ├── __init__.py
+│   │   ├── dataset.py    # Data loading
+│   │   └── train.py      # Training script
+│   └── models/           # Saved Checkpoints (.pt) (generated)
+└── tools/                # Utility scripts
+    └── bundle_kaggle.py  # Kaggle bundling script
