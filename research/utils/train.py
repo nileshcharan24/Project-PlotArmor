@@ -32,6 +32,8 @@ def main():
     selected_model = args.model
     config = MODEL_CONFIGS[selected_model]
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"CUDA available: {torch.cuda.is_available()}")
+    print(f"Using device: {device}")
 
     model = create_model(selected_model, config)
     model.to(device)
