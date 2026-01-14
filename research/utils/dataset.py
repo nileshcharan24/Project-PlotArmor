@@ -3,6 +3,7 @@ Dataset utilities for text data.
 Uses GPT-2 tokenizer for consistent tokenization.
 """
 
+import os
 import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import GPT2Tokenizer
@@ -17,8 +18,12 @@ class TextDataset(Dataset):
         self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
         self.tokenizer.pad_token = self.tokenizer.eos_token  # For padding if needed
 
-        with open(file_path, 'r', encoding='utf-8') as f:
-            text = f.read()
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                text = f.read()
+        else:
+            # Default dummy text
+            text = "Once upon a time in a small village, there lived a curious boy named Tim. Tim loved exploring the woods behind his house. One day, he found a hidden cave. Inside the cave, he discovered a magical sword that glowed with blue light. The sword spoke to him, saying, 'I am the Sword of Destiny, and you are the chosen one.' Tim was amazed and took the sword home. From that day on, he trained to become a great warrior. He fought dragons and saved the kingdom. But the real lesson was that courage comes from within, not from magic. And so, Tim lived happily ever after, knowing that true power is in the heart."
 
         tokens = self.tokenizer.encode(text)
         # Truncate to multiple of seq_len + 1 for next token prediction
