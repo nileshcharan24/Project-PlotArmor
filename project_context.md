@@ -130,7 +130,6 @@ This section acts as the living map of the project. Update immediately upon file
 │   ├── client/           # React Frontend
 │   └── server/           # Node.js/Express Backend
 │       └── index.js      # Express server
-├── config.py             # Root config
 ├── dist/                 # Bundled code for Kaggle (generated)
 ├── project_context.md    # Source of Truth (Architecture, Math, Structure)
 ├── requirements.txt      # Python Dependencies
