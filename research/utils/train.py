@@ -74,6 +74,8 @@ def main():
 
         if step % 10 == 0:
             pbar.set_postfix({"loss": f"{loss.item():.4f}"})
+        if step % 100 == 0:
+            print(f"Step {step}: Loss {loss.item():.4f}")
         pbar.update(1)
 
         # Validation
