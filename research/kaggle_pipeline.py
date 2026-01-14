@@ -49,7 +49,8 @@ def main():
 
     for model_name in ['bdh', 'gpt2']:
         print(f"\n=== Training {model_name.upper()} ===")
-        config = MODEL_CONFIGS[model_name]
+        config = MODEL_CONFIGS[model_name].copy()
+        config['context_len'] = 32  # Smaller for dummy data
         model = create_model(model_name, config)
         model.to(device)
 
