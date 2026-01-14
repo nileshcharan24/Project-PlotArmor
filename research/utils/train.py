@@ -16,7 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description="Train BDH or GPT-2 model")
     parser.add_argument('--model', type=str, default=DEFAULT_MODEL, choices=['bdh', 'gpt2'],
                         help="Model to train: bdh or gpt2")
-    parser.add_argument('--data_path', type=str, default='research/data/dummy.txt',
+    parser.add_argument('--data_path', type=str, default='research/data/tinystories_train.txt',
                         help="Path to text data file")
     parser.add_argument('--epochs', type=int, default=1, help="Number of epochs")
     parser.add_argument('--batch_size', type=int, default=4, help="Batch size")

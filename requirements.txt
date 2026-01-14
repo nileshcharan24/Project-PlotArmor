@@ -5,3 +5,4 @@ tqdm
 transformers
 wandb
 scikit-learn
+datasets
