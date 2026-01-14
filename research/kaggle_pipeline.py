@@ -43,7 +43,7 @@ def main():
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
     # Use dummy data
-    data_path = 'data/dummy.txt'
+    data_path = 'research/data/dummy.txt'
 
     results = {}
 
