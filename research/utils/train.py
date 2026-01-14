@@ -42,6 +42,10 @@ def main():
 
     train_loader, val_loader = get_dataloaders(args.data_path, config, batch_size=args.batch_size)
 
+    # Debug prints
+    print(f"Train loader batches: {len(train_loader)}")
+    print(f"Val loader batches: {len(val_loader)}")
+
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
     logger = CSVLogger()
@@ -55,6 +59,7 @@ def main():
     train_iter = iter(train_loader)
     epoch = 0
 
+    print("Starting training loop")
     pbar = tqdm(total=args.max_steps, desc="Training")
     while step < args.max_steps:
         try:
