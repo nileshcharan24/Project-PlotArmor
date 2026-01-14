@@ -8,13 +8,13 @@ import os
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
-import wandb
 from research.config.model_config import DEFAULT_MODEL, MODEL_CONFIGS
 from research.model import create_model
 from research.inference import generate_text
 from research.metrics import calculate_perplexity
 from transformers import GPT2Tokenizer
 from research.utils.dataset import get_dataloaders
+from research.utils.logger import CSVLogger
 
 
 def main():
@@ -29,9 +29,6 @@ def main():
     parser.add_argument('--gen_interval', type=int, default=500, help="Steps between generation")
     args = parser.parse_args()
 
-    # WandB init
-    wandb.init(project="BDH-vs-GPT2", name=f"{args.model}_training")
-
     selected_model = args.model
     config = MODEL_CONFIGS[selected_model]
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -45,10 +42,13 @@ def main():
 
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
+    logger = CSVLogger("research/logs/training_log.csv")
+
     model.train()
     step = 0
     best_val_loss = float('inf')
     train_iter = iter(train_loader)
+    epoch = 0
 
     pbar = tqdm(total=args.max_steps, desc="Training")
     while step < args.max_steps:
@@ -56,6 +56,7 @@ def main():
             x, y = next(train_iter)
         except StopIteration:
             train_iter = iter(train_loader)
+            epoch += 1
             x, y = next(train_iter)
 
         x, y = x.to(device), y.to(device)
@@ -66,7 +67,7 @@ def main():
         loss.backward()
         optimizer.step()
 
-        wandb.log({"loss": loss.item()}, step=step)
+        logger.log(epoch, step, loss.item(), 0.0, 0.0)  # Placeholder for val
 
         if step % 10 == 0:
             pbar.set_postfix({"loss": f"{loss.item():.4f}"})
@@ -76,7 +77,7 @@ def main():
         if step % args.val_interval == 0 and step > 0:
             perplexity = calculate_perplexity(model, val_loader, device)
             val_loss = torch.log(torch.tensor(perplexity))
-            wandb.log({"val_loss": val_loss.item(), "perplexity": perplexity}, step=step)
+            logger.log(epoch, step, loss.item(), val_loss.item(), perplexity)
             print(f"Step {step}, Val Loss: {val_loss.item():.4f}, PPL: {perplexity:.2f}")
 
             # Save best
@@ -91,13 +92,11 @@ def main():
         if step % args.gen_interval == 0 and step > 0:
             prompt = "Once upon a time, a dragon named Sparky..."
             generated = generate_text(model, tokenizer, prompt, max_length=50, device=device)
-            wandb.log({"generated_text": generated}, step=step)
             print(f"Generated: {generated[:100]}...")
 
         step += 1
 
     pbar.close()
-    wandb.finish()
 
 
 if __name__ == "__main__":

@@ -160,7 +160,9 @@ This section acts as the living map of the project. Update immediately upon file
 │   ├── utils/            # Utilities
 │   │   ├── __init__.py
 │   │   ├── dataset.py    # Data loading
+│   │   ├── logger.py     # CSV logging
 │   │   └── train.py      # Training script
+│   ├── logs/             # Training logs (generated)
 │   └── models/           # Saved Checkpoints (.pt) (generated)
 └── tools/                # Utility scripts
     └── bundle_kaggle.py  # Kaggle bundling script

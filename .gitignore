@@ -20,6 +20,10 @@ __pycache__/
 # Data directories
 data/
 
+# Logs
+research/logs/*.csv
+research/logs/*.png
+
 # Build directories
 app/client/dist
 app/server/dist
