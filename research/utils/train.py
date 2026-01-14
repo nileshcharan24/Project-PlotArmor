@@ -44,6 +44,9 @@ def main():
 
     logger = CSVLogger()
 
+    print(f"Starting training with {args.max_steps} steps, batch_size={args.batch_size}")
+    print(f"Model: {selected_model}, Device: {device}")
+
     model.train()
     step = 0
     best_val_loss = float('inf')
