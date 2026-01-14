@@ -5,11 +5,11 @@ Run in Kaggle notebook for GPU training.
 
 import os
 import torch
-from config.model_config import MODEL_CONFIGS
-from model import create_model
-from utils import get_dataloaders
-from metrics import calculate_perplexity
-from inference import generate_text
+from .config.model_config import MODEL_CONFIGS
+from .model import create_model
+from .utils import get_dataloaders
+from .metrics import calculate_perplexity
+from .inference import generate_text
 from transformers import GPT2Tokenizer
 import torch.nn.functional as F
 
@@ -42,8 +42,8 @@ def main():
 
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
-    # Use Kaggle input if available, else dummy
-    data_path = '/kaggle/input/dummy-data/dummy.txt' if os.path.exists('/kaggle/input/dummy-data/dummy.txt') else 'data/dummy.txt'
+    # Use dummy data
+    data_path = 'data/dummy.txt'
 
     results = {}
 

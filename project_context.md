@@ -136,7 +136,9 @@ This section acts as the living map of the project. Update immediately upon file
 ├── requirements.txt      # Python Dependencies
 ├── scratchpad.md         # Active Context & Planning
 ├── research/             # Model Development & Experimentation
+│   ├── __init__.py       # Package init
 │   ├── compare_models.py # Model comparison script
+│   ├── kaggle_pipeline.py # Kaggle training pipeline
 │   ├── test_env.py       # Environment test
 │   ├── test_train.py     # Training test
 │   ├── config/           # Configuration
