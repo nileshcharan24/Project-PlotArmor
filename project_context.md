@@ -142,7 +142,8 @@ This section acts as the living map of the project. Update immediately upon file
 │   ├── test_train.py     # Training test
 │   ├── config/           # Configuration
 │   │   ├── __init__.py
-│   │   └── model_config.py
+│   │   ├── model_config.py
+│   │   └── kaggle_long_train.py  # Long training overrides
 │   ├── data/             # Datasets
 │   │   └── dummy.txt     # Test data
 │   ├── inference/        # Inference utilities
