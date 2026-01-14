@@ -42,8 +42,8 @@ def main():
 
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
-    # Use dummy data
-    data_path = 'research/data/dummy.txt'
+    # Use Kaggle dataset
+    data_path = '/kaggle/input/dummy-data/dummy.txt'
 
     results = {}
 
