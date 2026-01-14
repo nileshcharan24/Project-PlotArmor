@@ -51,6 +51,7 @@ def main():
         print(f"\n=== Training {model_name.upper()} ===")
         config = MODEL_CONFIGS[model_name].copy()
         config['context_len'] = 32  # Smaller for dummy data
+        MODEL_CONFIGS[model_name] = config  # Update for train.py
         model = create_model(model_name, config)
         model.to(device)
 
