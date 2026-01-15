@@ -4,9 +4,9 @@ Test training script: Run 5 steps on dummy data to verify gradient descent.
 
 import torch
 import torch.nn.functional as F
-from .config.model_config import MODEL_CONFIGS
-from .model import create_model
-from .utils import get_dataloaders
+from research.config.model_config import MODEL_CONFIGS
+from research.model import create_model
+from research.utils.dataset import get_dataloaders
 
 
 def main():

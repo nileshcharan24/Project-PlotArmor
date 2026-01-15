@@ -56,12 +56,15 @@ class LinearAttention(nn.Module):
         # Q and K shapes: [B, H, T, N//H]
         Qr = self.rope(Q)
         Kr = self.rope(K)
-        
+
         # (Q @ K^T) masked lower triangular
         # Scaling is handled implicitly or can be added if needed
         attn_scores = (Qr @ Kr.mT).tril(diagonal=-1)
-        
-        return attn_scores @ V
+
+        # Expand V to match heads: V [B, 1, T, D] -> [B, H, T, D]
+        V_expanded = V.expand(-1, Q.shape[1], -1, -1)
+
+        return attn_scores @ V_expanded
 
 
 class BDH_GPU(nn.Module):

@@ -18,4 +18,4 @@
 
 ## Current Status
 
-Local training pipeline fully functional with CSV logging and progress prints. Kaggle setup detects GPU but execution hangs - may need further debugging. Ready to resume tomorrow.
+Identified and fixed shape mismatch bug in LinearAttention.forward causing Kaggle GPU hang. Expanded V tensor to match heads. Local test passed. Ready to push to git.
