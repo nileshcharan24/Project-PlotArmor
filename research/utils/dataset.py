@@ -23,17 +23,9 @@ class TextDataset(Dataset):
             with open(file_path, 'r', encoding='utf-8') as f:
                 text = f.read()
             print(f"DEBUG: Text loaded, length: {len(text)}")
-            print("DEBUG: Encoding text in chunks...")
-            chunk_size = 10 * 1024 * 1024  # 10MB
-            tokens = []
-            num_chunks = (len(text) + chunk_size - 1) // chunk_size
-            for i in range(num_chunks):
-                start = i * chunk_size
-                end = min(start + chunk_size, len(text))
-                chunk = text[start:end]
-                chunk_tokens = self.tokenizer.encode(chunk)
-                tokens.extend(chunk_tokens)
-                print(f"DEBUG: Encoded chunk {i+1}/{num_chunks}, total tokens: {len(tokens)}")
+            print("DEBUG: Encoding entire text at once...")
+            tokens = self.tokenizer.encode(text)
+            print(f"DEBUG: Tokens encoded, length: {len(tokens)}")
         else:
             print(f"Warning: {file_path} not found, using dummy text")
             text = ("Once upon a time in a small village, there lived a curious boy named Tim. Tim loved exploring the woods behind his house. One day, he found a hidden cave. Inside the cave, he discovered a magical sword that glowed with blue light. The sword spoke to him, saying, 'I am the Sword of Destiny, and you are the chosen one.' Tim was amazed and took the sword home. From that day on, he trained to become a great warrior. He fought dragons and saved the kingdom. But the real lesson was that courage comes from within, not from magic. And so, Tim lived happily ever after, knowing that true power is in the heart. "
@@ -71,10 +63,14 @@ def get_dataloaders(file_path: str, config: dict, batch_size: int = 4, train_rat
     Returns train and val DataLoaders.
     """
     dataset = TextDataset(file_path, config['context_len'], config['vocab_size'])
-    train_size = int(train_ratio * len(dataset))
-    val_size = len(dataset) - train_size
-
-    train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
+    # Instead of random split, split by indices to avoid shuffling large dataset
+    total_len = len(dataset)
+    train_size = int(train_ratio * total_len)
+    val_size = total_len - train_size
+    train_indices = list(range(train_size))
+    val_indices = list(range(train_size, total_len))
+    train_dataset = torch.utils.data.Subset(dataset, train_indices)
+    val_dataset = torch.utils.data.Subset(dataset, val_indices)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)

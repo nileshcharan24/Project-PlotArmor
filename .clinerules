@@ -38,3 +38,11 @@
 * **Venv Enforcement:** Never run `python <script>` directly. You must always use the virtual environment executable to avoid dependency issues.
 * **Command Pattern:** Use: `.\venv\Scripts\python.exe <script_name>`
 * **Reason:** This ensures the GPU-enabled PyTorch version is always used, regardless of the terminal's activation state.
+
+## 9. Bug Registry (MANDATORY)
+
+* Maintain a `bugs.md` file as the single source of truth for all major or recurring bugs.
+* For every non-trivial bug, add:
+  * Error/symptoms, root cause, exact fix, and prevention note.
+* Always consult `bugs.md` before debugging.
+* When a fix is taken from `bugs.md`, explicitly reference that entry in your workflow.
