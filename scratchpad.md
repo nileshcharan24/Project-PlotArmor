@@ -18,4 +18,4 @@
 
 ## Current Status
 
-Fixed shape mismatch in LinearAttention. Reduced BDH config to N=16384, D=128, L=4 for T4 memory. Reduced Kaggle batch_size to 4. Added debug prints to train.py and notebook. Local test passed. Changes pushed to git for user to update Kaggle notebook.
+Added debug prints in dataset.py to identify hang during text loading/tokenization. Changes pushed for user debugging on P100.
