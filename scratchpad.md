@@ -18,4 +18,4 @@
 
 ## Current Status
 
-Added debug prints in dataset.py to identify hang during text loading/tokenization. Changes pushed for user debugging on P100.
+Modified dataset.py to tokenize text in 10MB chunks to prevent memory issues during encoding. Changes pushed for user to test on Kaggle.

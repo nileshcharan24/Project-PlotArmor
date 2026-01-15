@@ -23,6 +23,17 @@ class TextDataset(Dataset):
             with open(file_path, 'r', encoding='utf-8') as f:
                 text = f.read()
             print(f"DEBUG: Text loaded, length: {len(text)}")
+            print("DEBUG: Encoding text in chunks...")
+            chunk_size = 10 * 1024 * 1024  # 10MB
+            tokens = []
+            num_chunks = (len(text) + chunk_size - 1) // chunk_size
+            for i in range(num_chunks):
+                start = i * chunk_size
+                end = min(start + chunk_size, len(text))
+                chunk = text[start:end]
+                chunk_tokens = self.tokenizer.encode(chunk)
+                tokens.extend(chunk_tokens)
+                print(f"DEBUG: Encoded chunk {i+1}/{num_chunks}, total tokens: {len(tokens)}")
         else:
             print(f"Warning: {file_path} not found, using dummy text")
             text = ("Once upon a time in a small village, there lived a curious boy named Tim. Tim loved exploring the woods behind his house. One day, he found a hidden cave. Inside the cave, he discovered a magical sword that glowed with blue light. The sword spoke to him, saying, 'I am the Sword of Destiny, and you are the chosen one.' Tim was amazed and took the sword home. From that day on, he trained to become a great warrior. He fought dragons and saved the kingdom. But the real lesson was that courage comes from within, not from magic. And so, Tim lived happily ever after, knowing that true power is in the heart. "
@@ -33,9 +44,8 @@ class TextDataset(Dataset):
                     "In a magical forest, there lived a family of talking animals. The rabbits built homes in the burrows. The squirrels collected nuts for the winter. The birds sang beautiful songs. Together, they created a harmonious community. They shared food and stories. The forest was a place of joy and peace. The animals learned that cooperation leads to happiness. "
                     "Long ago, there was a kingdom ruled by a kind queen. The queen loved her people. She built schools and hospitals. The people were happy and healthy. One day, a dragon threatened the kingdom. The queen bravely faced the dragon. With wisdom, she befriended the dragon. The dragon became a protector. The kingdom prospered. The queen taught that kindness can change enemies into friends.")
 
-        print("DEBUG: Encoding text...")
-        tokens = self.tokenizer.encode(text)
-        print(f"DEBUG: Tokens encoded, length: {len(tokens)}")
+            tokens = self.tokenizer.encode(text)
+            print(f"DEBUG: Tokens encoded, length: {len(tokens)}")
         # Truncate to multiple of seq_len + 1 for next token prediction
         num_tokens = (len(tokens) // (seq_len + 1)) * (seq_len + 1)
         tokens = tokens[:num_tokens]
