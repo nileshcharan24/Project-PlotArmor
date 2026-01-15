@@ -11,9 +11,9 @@ ENV = os.getenv('ENV', 'LOCAL')
 # MODEL_CONFIGS: Centralized params for models, ensuring comparable sizes (~15M-30M params)
 MODEL_CONFIGS = {
     "bdh": {
-        "N": 32768,      # Neurons
-        "D": 256,        # Bottleneck Dimension
-        "L": 6,          # Layers
+        "N": 16384,      # Neurons (reduced for T4 memory)
+        "D": 128,        # Bottleneck Dimension (reduced for T4 memory)
+        "L": 4,          # Layers (reduced for T4 memory)
         "H": 4,          # Heads
         "vocab_size": 50257,
         "context_len": 128,

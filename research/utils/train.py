@@ -70,9 +70,11 @@ def main():
             x, y = next(train_iter)
 
         x, y = x.to(device), y.to(device)
+        print(f"DEBUG: x device: {x.device}, y device: {y.device}")
 
         optimizer.zero_grad()
         logits = model(x)
+        print(f"DEBUG: logits device: {logits.device}")
         loss = F.cross_entropy(logits.view(-1, config['vocab_size']), y.view(-1))
         loss.backward()
         optimizer.step()
