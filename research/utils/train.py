@@ -31,6 +31,9 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
     parser = argparse.ArgumentParser(description="Train BDH or GPT-2 model")
+    def parse_bool(v: str) -> bool:
+        return str(v).lower() in ("1", "true", "t", "yes", "y")
+
     parser.add_argument('--config', type=str, default='research/config/kaggle_long_train.py', help='Path to config file')
     parser.add_argument('--model', type=str, default=DEFAULT_MODEL, choices=['bdh', 'gpt2'],
                         help="Model to train: bdh or gpt2")
@@ -47,9 +50,9 @@ def main():
     parser.add_argument('--log_interval', type=int, default=100, help="Steps between console logs")
     parser.add_argument('--debug', action='store_true', help="Enable verbose per-step debug logging")
     parser.add_argument('--num_workers', type=int, default=0, help="DataLoader workers (0 = main thread, safest against stalls)")
-    parser.add_argument('--pin_memory', action='store_true', help="Enable pin_memory for DataLoader")
-    parser.add_argument('--persistent_workers', action='store_true', help="Enable persistent_workers for DataLoader")
-    parser.add_argument('--prefetch_factor', type=int, default=None, help="prefetch_factor for DataLoader (None disables prefetch)")
+    parser.add_argument('--pin_memory', type=parse_bool, default=False, help="Enable pin_memory for DataLoader (bool)")
+    parser.add_argument('--persistent_workers', type=parse_bool, default=False, help="Enable persistent_workers for DataLoader (bool)")
+    parser.add_argument('--prefetch_factor', type=str, default=None, help="prefetch_factor for DataLoader; use 'None' to disable")
     args = parser.parse_args()
 
     import importlib
