@@ -115,6 +115,7 @@ def main():
     model.train()
     global_step = 0
     best_val_loss = float('inf')
+    best_saved = False
     train_iter = iter(train_loader)
     epoch = 0
 
@@ -159,7 +160,10 @@ def main():
         if args.debug:
             print(f"DEBUG: Step {global_step} forward pass time: {forward_time:.3f}s, logits device: {logits.device}")
         
-        loss = F.cross_entropy(logits.view(-1, config['vocab_size']), y.view(-1))
+        # Next-token prediction: shift logits and labels by one
+        logits_shifted = logits[:, :-1, :].contiguous()
+        y_shifted = y[:, 1:].contiguous()
+        loss = F.cross_entropy(logits_shifted.view(-1, config['vocab_size']), y_shifted.view(-1))
         if torch.isnan(loss) or torch.isinf(loss):
             print(f"ERROR: NaN or Inf loss detected at step {global_step}")
             break
@@ -191,6 +195,7 @@ def main():
                 best_val_loss = val_loss
                 os.makedirs('./models', exist_ok=True)
                 torch.save(model.state_dict(), checkpoint_path)
+                best_saved = True
                 print(f"Best checkpoint saved to {checkpoint_path}")
 
         # Generation
@@ -204,8 +209,22 @@ def main():
         timer.cancel()
 
     pbar.close()
+
+    # Ensure a best checkpoint exists even if val_interval was not hit
+    if not best_saved:
+        perplexity = calculate_perplexity(model, val_loader, device, max_batches=10)
+        val_loss = torch.log(torch.tensor(perplexity))
+        logger.log(epoch, global_step, loss.item() * grad_acc_steps, val_loss.item(), perplexity)
+        os.makedirs('./models', exist_ok=True)
+        torch.save(model.state_dict(), checkpoint_path)
+        best_saved = True
+        print(f"Best checkpoint saved post-train to {checkpoint_path}")
+
     print(f"Training complete. Results saved to: {logger.filename}")
-    print(f"Best model saved to: {checkpoint_path}")
+    if os.path.exists(checkpoint_path):
+        print(f"Best model saved to: {checkpoint_path}")
+    else:
+        print(f"Warning: best model file not found at {checkpoint_path}")
 
     # Copy to Kaggle working for download if in Kaggle
     if os.path.exists('/kaggle/working'):

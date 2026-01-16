@@ -83,8 +83,8 @@ class GPT2Model(nn.Module):
         self.lm_head = nn.Linear(n_embd, vocab_size, bias=False)
 
     def forward(self, idx: torch.Tensor) -> torch.Tensor:
+        # Standard GPT-2 forward without implicit device moves; caller handles .to(device)
         device = idx.device
-        self.to(device)
         _, T = idx.size()
         pos = torch.arange(0, T, dtype=torch.long, device=device)
         tok_emb = self.wte(idx)
