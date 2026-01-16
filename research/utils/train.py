@@ -36,6 +36,10 @@ def main():
     parser.add_argument('--gen_interval', type=int, default=500, help="Steps between generation")
     parser.add_argument('--log_interval', type=int, default=100, help="Steps between console logs")
     parser.add_argument('--debug', action='store_true', help="Enable verbose per-step debug logging")
+    parser.add_argument('--num_workers', type=int, default=0, help="DataLoader workers (0 = main thread, safest against stalls)")
+    parser.add_argument('--pin_memory', action='store_true', help="Enable pin_memory for DataLoader")
+    parser.add_argument('--persistent_workers', action='store_true', help="Enable persistent_workers for DataLoader")
+    parser.add_argument('--prefetch_factor', type=int, default=None, help="prefetch_factor for DataLoader (None disables prefetch)")
     args = parser.parse_args()
 
     selected_model = args.model
@@ -58,6 +62,10 @@ def main():
         config,
         batch_size=args.batch_size,
         pretokenized_path=args.pretokenized_path,
+        num_workers=args.num_workers,
+        pin_memory=args.pin_memory,
+        persistent_workers=args.persistent_workers,
+        prefetch_factor=args.prefetch_factor,
     )
 
     # Debug prints
