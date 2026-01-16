@@ -16,7 +16,9 @@ def generate_text(model: torch.nn.Module, tokenizer: GPT2Tokenizer, prompt: str,
     with torch.no_grad():
         for _ in range(max_length):
             outputs = model(input_ids)
-            next_token_logits = outputs[:, -1, :]
+            logits = outputs['logits'] if isinstance(outputs, dict) and 'logits' in outputs else outputs
+            assert logits is not None, "Model output missing logits"
+            next_token_logits = logits[:, -1, :]
             next_token = torch.multinomial(torch.softmax(next_token_logits, dim=-1), 1)
             input_ids = torch.cat([input_ids, next_token], dim=-1)
 
