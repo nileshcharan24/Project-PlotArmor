@@ -23,6 +23,8 @@ def main():
                         help="Model to train: bdh or gpt2")
     parser.add_argument('--data_path', type=str, default='research/data/tinystories_train.txt',
                         help="Path to text data file")
+    parser.add_argument('--pretokenized_path', type=str, default=None,
+                        help="Path to pretokenized memmap (.bin). If provided, tokenization is skipped.")
     parser.add_argument('--max_steps', type=int, default=1000, help="Max training steps")
     parser.add_argument('--batch_size', type=int, default=4, help="Batch size")
     parser.add_argument('--val_interval', type=int, default=500, help="Steps between validation")
@@ -40,7 +42,13 @@ def main():
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
 
-    train_loader, val_loader = get_dataloaders(args.data_path, config, batch_size=args.batch_size)
+    # Prefer pretokenized memmap if provided
+    train_loader, val_loader = get_dataloaders(
+        args.data_path,
+        config,
+        batch_size=args.batch_size,
+        pretokenized_path=args.pretokenized_path,
+    )
 
     # Debug prints
     print(f"Train loader batches: {len(train_loader)}")
