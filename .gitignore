@@ -17,8 +17,10 @@ __pycache__/
 *.pt
 *.pth
 
-# Data directories
+# Data directories and model folders
 data/
+research/kaggle_models/
+research/models/
 
 # Logs
 research/results/*.csv

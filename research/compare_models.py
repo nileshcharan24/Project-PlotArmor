@@ -1,20 +1,47 @@
 """
 Compare BDH and GPT-2 models: training, perplexity, generation.
+
+Fixes:
+- Handle dict outputs (e.g., GPT-2) by extracting logits consistently.
+- Allow pretokenized data path to avoid noisy warnings and ensure consistent data usage.
 """
 
-from config.model_config import MODEL_CONFIGS
-from model import create_model
-from utils import get_dataloaders
-from metrics import calculate_perplexity
-from inference import generate_text
-from transformers import GPT2Tokenizer
+import os
+import sys
+from pathlib import Path
 import torch
 import torch.nn.functional as F
+from transformers import GPT2Tokenizer
+
+# Ensure project root on path
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from research.config.model_config import MODEL_CONFIGS
+from research.model import create_model
+from research.utils.dataset import get_dataloaders
+from research.metrics import calculate_perplexity
+from research.inference import generate_text
+
+
+def _get_logits(output):
+    return output['logits'] if isinstance(output, dict) and 'logits' in output else output
 
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+
+    # Use pretokenized data if available
+    pretokenized_path = PROJECT_ROOT / 'research' / 'data' / 'tinystories_train.bin'
+    data_path = 'research/data/dummy.txt'
+    if pretokenized_path.exists():
+        print(f"Using pretokenized data: {pretokenized_path}")
+        pretokenized_arg = str(pretokenized_path)
+    else:
+        print("Pretokenized file not found; falling back to text data")
+        pretokenized_arg = None
 
     results = {}
 
@@ -25,7 +52,12 @@ def main():
         model.to(device)
 
         # Get dataloaders
-        train_loader, val_loader = get_dataloaders('research/data/dummy.txt', config, batch_size=2)
+        train_loader, val_loader = get_dataloaders(
+            data_path,
+            config,
+            batch_size=2,
+            pretokenized_path=pretokenized_arg,
+        )
 
         # Quick training (5 steps)
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
@@ -35,7 +67,8 @@ def main():
                 break
             x, y = x.to(device), y.to(device)
             optimizer.zero_grad()
-            logits = model(x)
+            outputs = model(x)
+            logits = _get_logits(outputs)
             loss = F.cross_entropy(logits.view(-1, config['vocab_size']), y.view(-1))
             loss.backward()
             optimizer.step()
