@@ -22,6 +22,7 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
     parser = argparse.ArgumentParser(description="Train BDH or GPT-2 model")
+    parser.add_argument('--config', type=str, default='research/config/kaggle_long_train.py', help='Path to config file')
     parser.add_argument('--model', type=str, default=DEFAULT_MODEL, choices=['bdh', 'gpt2'],
                         help="Model to train: bdh or gpt2")
     parser.add_argument('--data_path', type=str, default='research/data/tinystories_train.txt',
@@ -42,8 +43,13 @@ def main():
     parser.add_argument('--prefetch_factor', type=int, default=None, help="prefetch_factor for DataLoader (None disables prefetch)")
     args = parser.parse_args()
 
+    import importlib.util
+    config_path = args.config
+    spec = importlib.util.spec_from_file_location("config_module", config_path)
+    config_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_module)
     selected_model = args.model
-    config = MODEL_CONFIGS[selected_model]
+    config = config_module.KAGGLE_LONG_CONFIGS[selected_model]
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"CUDA available: {torch.cuda.is_available()}")
     print(f"Using device: {device}")
