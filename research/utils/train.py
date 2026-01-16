@@ -34,6 +34,8 @@ def main():
                         help="Number of steps to accumulate gradients before optimizer step")
     parser.add_argument('--val_interval', type=int, default=500, help="Steps between validation")
     parser.add_argument('--gen_interval', type=int, default=500, help="Steps between generation")
+    parser.add_argument('--log_interval', type=int, default=100, help="Steps between console logs")
+    parser.add_argument('--debug', action='store_true', help="Enable verbose per-step debug logging")
     args = parser.parse_args()
 
     selected_model = args.model
@@ -47,6 +49,8 @@ def main():
 
     lr = config.get('learning_rate', 1e-3)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+    assert lr > 0, "Learning rate must be positive"
+    assert len(optimizer.param_groups) > 0, "Optimizer has no parameter groups"
 
     # Prefer pretokenized memmap if provided
     train_loader, val_loader = get_dataloaders(
@@ -65,15 +69,17 @@ def main():
     logger = CSVLogger()
 
     print(f"Starting training with {args.max_steps} steps, batch_size={args.batch_size}")
-    print(f"Model: {selected_model}, Device: {device}")
+    print(f"Model: {selected_model}, Device: {device}, LR: {lr}")
 
     model.train()
-    step = 0
+    global_step = 0
     best_val_loss = float('inf')
     train_iter = iter(train_loader)
     epoch = 0
 
     grad_acc_steps = config.get('gradient_accumulation_steps', getattr(args, 'gradient_accumulation_steps', 1))
+    log_interval = max(1, args.log_interval)
+    checkpoint_path = f'./models/{selected_model}_best.pt'
 
     import time
     import threading
@@ -87,86 +93,73 @@ def main():
 
     print("Starting training loop with detailed debug")
     pbar = tqdm(total=args.max_steps, desc="Training")
-    while step < args.max_steps:
-        timer = watchdog(30, step)  # 30s timeout watchdog
+    while global_step < args.max_steps:
+        timer = watchdog(30, global_step)  # 30s timeout watchdog
         try:
             start_fetch = time.time()
             x, y = next(train_iter)
             fetch_time = time.time() - start_fetch
-            print(f"DEBUG: Step {step} batch fetch time: {fetch_time:.3f}s")
+            if args.debug:
+                print(f"DEBUG: Step {global_step} batch fetch time: {fetch_time:.3f}s")
         except StopIteration:
             train_iter = iter(train_loader)
             epoch += 1
             x, y = next(train_iter)
-            print(f"DEBUG: New epoch {epoch} started")
+            if args.debug:
+                print(f"DEBUG: New epoch {epoch} started")
         
         x, y = x.to(device), y.to(device)
-        print(f"DEBUG: Step {step} x device: {x.device}, y device: {y.device}")
+        if args.debug:
+            print(f"DEBUG: Step {global_step} x device: {x.device}, y device: {y.device}")
         
         start_forward = time.time()
         logits = model(x)
         forward_time = time.time() - start_forward
-        print(f"DEBUG: Step {step} forward pass time: {forward_time:.3f}s, logits device: {logits.device}")
+        if args.debug:
+            print(f"DEBUG: Step {global_step} forward pass time: {forward_time:.3f}s, logits device: {logits.device}")
         
         loss = F.cross_entropy(logits.view(-1, config['vocab_size']), y.view(-1))
         if torch.isnan(loss) or torch.isinf(loss):
-            print(f"ERROR: NaN or Inf loss detected at step {step}")
+            print(f"ERROR: NaN or Inf loss detected at step {global_step}")
             break
         
         # Gradient accumulation
         loss = loss / grad_acc_steps
         loss.backward()
         
-        if (step + 1) % grad_acc_steps == 0:
+        if (global_step + 1) % grad_acc_steps == 0:
             optimizer.step()
             optimizer.zero_grad()
-        
-        logger.log(epoch, step, loss.item() * grad_acc_steps, 0.0, 0.0)  # Store unscaled loss
-        
-        if step % 10 == 0:
+
+        logger.log(epoch, global_step, loss.item() * grad_acc_steps, 0.0, 0.0)  # Store unscaled loss
+
+        if (global_step + 1) % log_interval == 0:
             pbar.set_postfix({"loss": f"{(loss.item() * grad_acc_steps):.4f}"})
-        if step % 100 == 0:
-            print(f"Step {step}: Loss {(loss.item() * grad_acc_steps):.4f}")
-        pbar.update(1)
-        timer.cancel()
-
-    pbar.close()
-    print(f"Training complete. Results saved to: {logger.filename}")
-    print(f"Best model saved to: {checkpoint_path}")
-
-    # Copy to Kaggle working for download if in Kaggle
-    if os.path.exists('/kaggle/working'):
-        import shutil
-        kaggle_output = f"/kaggle/working/{os.path.basename(logger.filename)}"
-        shutil.copy(logger.filename, kaggle_output)
-        print(f"CSV copied to Kaggle output: {kaggle_output}")
-        if os.path.exists(checkpoint_path):
-            model_output = f"/kaggle/working/{os.path.basename(checkpoint_path)}"
-            shutil.copy(checkpoint_path, model_output)
-            print(f"Model copied to Kaggle output: {model_output}")
+            print(f"Step {global_step}: Loss {(loss.item() * grad_acc_steps):.4f}")
 
         # Validation
-        if step % args.val_interval == 0 and step > 0:
+        if (global_step + 1) % args.val_interval == 0:
             perplexity = calculate_perplexity(model, val_loader, device)
             val_loss = torch.log(torch.tensor(perplexity))
-            logger.log(epoch, step, loss.item() * grad_acc_steps, val_loss.item(), perplexity)
-            print(f"Step {step}, Val Loss: {val_loss.item():.4f}, PPL: {perplexity:.2f}")
+            logger.log(epoch, global_step, loss.item() * grad_acc_steps, val_loss.item(), perplexity)
+            print(f"Step {global_step}, Val Loss: {val_loss.item():.4f}, PPL: {perplexity:.2f}")
 
             # Save best
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 os.makedirs('./models', exist_ok=True)
-                checkpoint_path = f'./models/{selected_model}_best.pt'
                 torch.save(model.state_dict(), checkpoint_path)
                 print(f"Best checkpoint saved to {checkpoint_path}")
 
         # Generation
-        if step % args.gen_interval == 0 and step > 0:
+        if (global_step + 1) % args.gen_interval == 0:
             prompt = "Once upon a time, a dragon named Sparky..."
             generated = generate_text(model, tokenizer, prompt, max_length=50, device=device)
             print(f"Generated: {generated[:100]}...")
 
-        step += 1
+        global_step += 1
+        pbar.update(1)
+        timer.cancel()
 
     pbar.close()
     print(f"Training complete. Results saved to: {logger.filename}")
