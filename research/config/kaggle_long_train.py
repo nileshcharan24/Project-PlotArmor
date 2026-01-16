@@ -1,9 +1,20 @@
 """
 Kaggle long training configuration.
 Overrides for T4 x2 GPUs.
+
+Import-safe for script execution: use absolute import fallback when __package__ is None.
 """
 
-from .model_config import MODEL_CONFIGS
+try:
+    from .model_config import MODEL_CONFIGS
+except ImportError:
+    import sys
+    from pathlib import Path
+    # Add project root to sys.path when executed as a script
+    PROJECT_ROOT = Path(__file__).resolve().parents[2]
+    if str(PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(PROJECT_ROOT))
+    from research.config.model_config import MODEL_CONFIGS
 
 # Override for long training
 KAGGLE_LONG_CONFIGS = MODEL_CONFIGS.copy()

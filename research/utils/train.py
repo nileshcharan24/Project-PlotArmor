@@ -5,9 +5,18 @@ Accepts --model argument for dynamic model selection.
 
 import argparse
 import os
+import sys
+import platform
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
+from pathlib import Path
+
+# Ensure project root is on sys.path for both Windows and Kaggle script execution
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from research.config.model_config import DEFAULT_MODEL, MODEL_CONFIGS
 from research.model import create_model
 from research.inference import generate_text
@@ -43,13 +52,18 @@ def main():
     parser.add_argument('--prefetch_factor', type=int, default=None, help="prefetch_factor for DataLoader (None disables prefetch)")
     args = parser.parse_args()
 
-    import importlib.util
-    config_path = args.config
-    spec = importlib.util.spec_from_file_location("config_module", config_path)
-    config_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(config_module)
+    import importlib
+    module_path = args.config
+    if module_path.endswith('.py'):
+        module_path = module_path[:-3]
+    module_path = module_path.replace('\\', '/').replace('/', '.')
+    module_path = module_path.lstrip('.')
+    config_module = importlib.import_module(module_path)
     selected_model = args.model
-    config = config_module.KAGGLE_LONG_CONFIGS[selected_model]
+    config_dict = getattr(config_module, 'KAGGLE_LONG_CONFIGS', MODEL_CONFIGS)
+    if selected_model not in config_dict:
+        raise ValueError(f"Selected model '{selected_model}' not found in config")
+    config = config_dict[selected_model]
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"CUDA available: {torch.cuda.is_available()}")
     print(f"Using device: {device}")
@@ -61,6 +75,16 @@ def main():
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
     assert lr > 0, "Learning rate must be positive"
     assert len(optimizer.param_groups) > 0, "Optimizer has no parameter groups"
+
+    # Windows-safe multiprocessing: spawn and conservative workers
+    if platform.system() == 'Windows':
+        import multiprocessing as mp
+        mp.set_start_method('spawn', force=True)
+        # Disable persistent_workers on Windows to avoid spawn pickle issues
+        args.persistent_workers = False
+        # If using pretokenized memmap, force num_workers=0 for safety
+        if args.pretokenized_path:
+            args.num_workers = 0
 
     # Prefer pretokenized memmap if provided
     train_loader, val_loader = get_dataloaders(
