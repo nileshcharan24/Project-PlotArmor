@@ -18,6 +18,9 @@ from research.utils.logger import CSVLogger
 
 
 def main():
+    # Free any cached GPU memory proactively
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     parser = argparse.ArgumentParser(description="Train BDH or GPT-2 model")
     parser.add_argument('--model', type=str, default=DEFAULT_MODEL, choices=['bdh', 'gpt2'],
                         help="Model to train: bdh or gpt2")
@@ -27,6 +30,8 @@ def main():
                         help="Path to pretokenized memmap (.bin). If provided, tokenization is skipped.")
     parser.add_argument('--max_steps', type=int, default=1000, help="Max training steps")
     parser.add_argument('--batch_size', type=int, default=4, help="Batch size")
+    parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
+                        help="Number of steps to accumulate gradients before optimizer step")
     parser.add_argument('--val_interval', type=int, default=500, help="Steps between validation")
     parser.add_argument('--gen_interval', type=int, default=500, help="Steps between generation")
     args = parser.parse_args()
@@ -40,7 +45,8 @@ def main():
     model = create_model(selected_model, config)
     model.to(device)
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+    lr = config.get('learning_rate', 1e-3)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
     # Prefer pretokenized memmap if provided
     train_loader, val_loader = get_dataloaders(
@@ -67,6 +73,8 @@ def main():
     train_iter = iter(train_loader)
     epoch = 0
 
+    grad_acc_steps = config.get('gradient_accumulation_steps', getattr(args, 'gradient_accumulation_steps', 1))
+
     print("Starting training loop")
     pbar = tqdm(total=args.max_steps, desc="Training")
     while step < args.max_steps:
@@ -80,26 +88,31 @@ def main():
         x, y = x.to(device), y.to(device)
         print(f"DEBUG: x device: {x.device}, y device: {y.device}")
 
-        optimizer.zero_grad()
         logits = model(x)
         print(f"DEBUG: logits device: {logits.device}")
         loss = F.cross_entropy(logits.view(-1, config['vocab_size']), y.view(-1))
-        loss.backward()
-        optimizer.step()
 
-        logger.log(epoch, step, loss.item(), 0.0, 0.0)  # Placeholder for val
+        # Gradient accumulation
+        loss = loss / grad_acc_steps
+        loss.backward()
+
+        if (step + 1) % grad_acc_steps == 0:
+            optimizer.step()
+            optimizer.zero_grad()
+
+        logger.log(epoch, step, loss.item() * grad_acc_steps, 0.0, 0.0)  # Store unscaled loss
 
         if step % 10 == 0:
-            pbar.set_postfix({"loss": f"{loss.item():.4f}"})
+            pbar.set_postfix({"loss": f"{(loss.item() * grad_acc_steps):.4f}"})
         if step % 100 == 0:
-            print(f"Step {step}: Loss {loss.item():.4f}")
+            print(f"Step {step}: Loss {(loss.item() * grad_acc_steps):.4f}")
         pbar.update(1)
 
         # Validation
         if step % args.val_interval == 0 and step > 0:
             perplexity = calculate_perplexity(model, val_loader, device)
             val_loss = torch.log(torch.tensor(perplexity))
-            logger.log(epoch, step, loss.item(), val_loss.item(), perplexity)
+            logger.log(epoch, step, loss.item() * grad_acc_steps, val_loss.item(), perplexity)
             print(f"Step {step}, Val Loss: {val_loss.item():.4f}, PPL: {perplexity:.2f}")
 
             # Save best

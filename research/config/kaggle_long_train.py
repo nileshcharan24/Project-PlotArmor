@@ -11,8 +11,9 @@ KAGGLE_LONG_CONFIGS = MODEL_CONFIGS.copy()
 for model in ['bdh', 'gpt2']:
     KAGGLE_LONG_CONFIGS[model] = MODEL_CONFIGS[model].copy()
     KAGGLE_LONG_CONFIGS[model].update({
-        "batch_size": 64,  # Increased for better GPU utilization
-        "num_workers": 4,  # DataLoader workers for better throughput
+        "batch_size": 16,  # Reduce to avoid CUDA OOM
+        "gradient_accumulation_steps": 4,  # Simulate effective batch 64
+        "num_workers": 4,  # DataLoader workers
         "max_steps": 1000,  # Reduced for testing
         "learning_rate": 3e-4,  # Standard LR
     })

@@ -26,11 +26,20 @@ Modified dataset.py to tokenize text in 10MB chunks to prevent memory issues dur
 - Updated research/utils/dataset.py to prefer loading pretokenized .bin via np.memmap (read-only); falls back to slow on-the-fly tokenization with warning; added optional pretokenized_path plumbed into get_dataloaders.
 - Added pretokenization flag to research/utils/train.py (args.pretokenized_path) to skip tokenization when cache exists.
 - Inserted Kaggle notebook cell in project-plotarmour.ipynb to run tools/pre_tokenize.py (writes /kaggle/working/research/data/tinystories_train.bin) before training.
+- OOM/tokenizer fixes: set batch_size=16 and gradient_accumulation_steps=4 in research/config/kaggle_long_train.py; added gradient accumulation + lr from config + torch.cuda.empty_cache() in research/utils/train.py; set truncation=True, max_length=1024 in tools/pre_tokenize.py.
 
 ## Next Steps
 
 - Local quick test on small sample to validate memmap read path and truncation logic.
 - If needed, add notebook cell in project-plotarmour.ipynb to run tools/pre_tokenize.py on Kaggle before training.
+
+## New Task Plan (2026-01-16) — Kaggle OOM + tokenizer warning
+
+1) config fix: set batch_size=16 and add gradient_accumulation_steps=4 in [research/config/kaggle_long_train.py](research/config/kaggle_long_train.py) to simulate effective 64 without OOM.
+2) training fix: implement gradient accumulation and torch.cuda.empty_cache() at start of main() in [research/utils/train.py](research/utils/train.py); ensure optimizer.step/zero_grad only after accumulation.
+3) tokenizer fix: in [tools/pre_tokenize.py](tools/pre_tokenize.py) set truncation=True, max_length=1024 (aligned with context_len) in tokenizer calls to silence warnings and cap length.
+4) notebook check: verify pretokenize cell still present in [project-plotarmour.ipynb](project-plotarmour.ipynb); update if needed and flag if changed.
+5) sanity: skim project_context.md to ensure goal alignment; note no structure change so directory map unchanged.
 
 ## Plan (approved — 2026-01-16, user-modified for safety/visibility)
 

@@ -62,6 +62,8 @@ def pre_tokenize(
                 add_special_tokens=False,
                 return_attention_mask=False,
                 return_token_type_ids=False,
+                truncation=True,
+                max_length=1024,
             )
             total_tokens += sum(len(ids) for ids in encodings["input_ids"])
             pbar.update(len(lines))
@@ -88,6 +90,8 @@ def pre_tokenize(
                 add_special_tokens=False,
                 return_attention_mask=False,
                 return_token_type_ids=False,
+                truncation=True,
+                max_length=1024,
             )
             for ids in encodings["input_ids"]:
                 end_pos = write_pos + len(ids)

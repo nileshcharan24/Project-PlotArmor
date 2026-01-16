@@ -1,21 +1,27 @@
-# Project Context: BDH-GPU "Logic Validator"
+# Project Context: BDH-GPU "Project PlotArmor"
 
-## 1. Project Objective (Idea B)
-**Goal:** Build a "Logic Validator" web application that helps writers/editors detect plot holes.
-**Core Mechanism:** "The Surprise Test."
-1.  **Ingest:** User uploads a novel/chapter text.
-2.  **Learn:** Model processes the text to update its internal state (finetuning or state-forwarding).
-3.  **Query:** User inputs a "Backstory" or "New Fact."
-4.  **Validate:** Model calculates the perplexity (loss) of this new fact given the context.
-    * *Low Loss* = Consistent.
-    * *High Loss* = Contradiction.
+## 1. Project Objective
+**Goal:** Build "Project PlotArmor"—a web application that demonstrates the superiority of the Biologically Inspired Dragon Hatchling (BDH) architecture over standard Transformers through controllability and logic validation.
+
+**Core Demonstrations:**
+1.  **The "Hemisphere Slider" (Controllability):**
+    * A writing tool with a slider to separate **Logic** (Left Brain) from **Creativity** (Right Brain).
+    * **Demonstration:** Users adjust the slider to see BDH shift from "dry, factual consistency" to "flowery, narrative prose," proving it offers granular control that black-box Transformers lack.
+
+2.  **The "Logic Validator" (Consistency):**
+    * **Mechanism:** "The Surprise Test."
+    * **Ingest:** User uploads a novel/chapter text.
+    * **Query:** User inputs a "Backstory" or "New Fact."
+    * **Validate:** Model calculates the perplexity (loss) of this new fact given the context.
+        * *Low Loss* = Consistent.
+        * *High Loss* = Contradiction.
 
 ## 2. Target Configuration
 * **Neurons (N):** 16384 (High capacity for storing story details)
 * **Bottleneck Dimension (D):** 128 (Efficient compute)
 * **Layers (L):** 4 (Scalable for initial testing)
 * **Heads (H):** 4
-* **Note:** Architecture parameters must be defined in a strictly modular config file to allow toggling between "Toy" (Laptop) and "Research" (Kaggle) sizes.
+* **Note:** Architecture parameters are defined in `research/config/` to allow toggling between "Toy" (Laptop) and "Research" (Kaggle) sizes.
 
 ## 3. Mathematical Foundation
 
