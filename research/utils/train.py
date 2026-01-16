@@ -75,38 +75,75 @@ def main():
 
     grad_acc_steps = config.get('gradient_accumulation_steps', getattr(args, 'gradient_accumulation_steps', 1))
 
-    print("Starting training loop")
+    import time
+    import threading
+
+    def watchdog(timeout_sec, step):
+        def timeout_func():
+            print(f"WARNING: Step {step} exceeded {timeout_sec}s timeout. Possible stall detected.")
+        timer = threading.Timer(timeout_sec, timeout_func)
+        timer.start()
+        return timer
+
+    print("Starting training loop with detailed debug")
     pbar = tqdm(total=args.max_steps, desc="Training")
     while step < args.max_steps:
+        timer = watchdog(30, step)  # 30s timeout watchdog
         try:
+            start_fetch = time.time()
             x, y = next(train_iter)
+            fetch_time = time.time() - start_fetch
+            print(f"DEBUG: Step {step} batch fetch time: {fetch_time:.3f}s")
         except StopIteration:
             train_iter = iter(train_loader)
             epoch += 1
             x, y = next(train_iter)
-
+            print(f"DEBUG: New epoch {epoch} started")
+        
         x, y = x.to(device), y.to(device)
-        print(f"DEBUG: x device: {x.device}, y device: {y.device}")
-
+        print(f"DEBUG: Step {step} x device: {x.device}, y device: {y.device}")
+        
+        start_forward = time.time()
         logits = model(x)
-        print(f"DEBUG: logits device: {logits.device}")
+        forward_time = time.time() - start_forward
+        print(f"DEBUG: Step {step} forward pass time: {forward_time:.3f}s, logits device: {logits.device}")
+        
         loss = F.cross_entropy(logits.view(-1, config['vocab_size']), y.view(-1))
-
+        if torch.isnan(loss) or torch.isinf(loss):
+            print(f"ERROR: NaN or Inf loss detected at step {step}")
+            break
+        
         # Gradient accumulation
         loss = loss / grad_acc_steps
         loss.backward()
-
+        
         if (step + 1) % grad_acc_steps == 0:
             optimizer.step()
             optimizer.zero_grad()
-
+        
         logger.log(epoch, step, loss.item() * grad_acc_steps, 0.0, 0.0)  # Store unscaled loss
-
+        
         if step % 10 == 0:
             pbar.set_postfix({"loss": f"{(loss.item() * grad_acc_steps):.4f}"})
         if step % 100 == 0:
             print(f"Step {step}: Loss {(loss.item() * grad_acc_steps):.4f}")
         pbar.update(1)
+        timer.cancel()
+
+    pbar.close()
+    print(f"Training complete. Results saved to: {logger.filename}")
+    print(f"Best model saved to: {checkpoint_path}")
+
+    # Copy to Kaggle working for download if in Kaggle
+    if os.path.exists('/kaggle/working'):
+        import shutil
+        kaggle_output = f"/kaggle/working/{os.path.basename(logger.filename)}"
+        shutil.copy(logger.filename, kaggle_output)
+        print(f"CSV copied to Kaggle output: {kaggle_output}")
+        if os.path.exists(checkpoint_path):
+            model_output = f"/kaggle/working/{os.path.basename(checkpoint_path)}"
+            shutil.copy(checkpoint_path, model_output)
+            print(f"Model copied to Kaggle output: {model_output}")
 
         # Validation
         if step % args.val_interval == 0 and step > 0:
