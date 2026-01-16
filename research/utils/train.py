@@ -180,7 +180,8 @@ def main():
 
         # Validation
         if (global_step + 1) % args.val_interval == 0:
-            perplexity = calculate_perplexity(model, val_loader, device)
+            # Limit validation batches to avoid long stalls on large val sets
+            perplexity = calculate_perplexity(model, val_loader, device, max_batches=10)
             val_loss = torch.log(torch.tensor(perplexity))
             logger.log(epoch, global_step, loss.item() * grad_acc_steps, val_loss.item(), perplexity)
             print(f"Step {global_step}, Val Loss: {val_loss.item():.4f}, PPL: {perplexity:.2f}")

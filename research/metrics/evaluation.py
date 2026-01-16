@@ -7,23 +7,31 @@ import torch.nn.functional as F
 from typing import List
 
 
-def calculate_perplexity(model: torch.nn.Module, dataloader: torch.utils.data.DataLoader, device: torch.device) -> float:
+def calculate_perplexity(
+    model: torch.nn.Module,
+    dataloader: torch.utils.data.DataLoader,
+    device: torch.device,
+    max_batches=None,
+) -> float:
     """
-    Calculate perplexity on the dataset.
+    Calculate perplexity on (optionally limited) dataset batches.
+    Limiting batches avoids long stalls during validation on large splits.
     """
     model.eval()
     total_loss = 0.0
     total_tokens = 0
 
     with torch.no_grad():
-        for x, y in dataloader:
+        for i, (x, y) in enumerate(dataloader):
+            if max_batches is not None and i >= max_batches:
+                break
             x, y = x.to(device), y.to(device)
             logits = model(x)
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1), reduction='sum')
             total_loss += loss.item()
             total_tokens += y.numel()
 
-    avg_loss = total_loss / total_tokens
+    avg_loss = total_loss / max(total_tokens, 1)
     perplexity = torch.exp(torch.tensor(avg_loss)).item()
     return perplexity
 
