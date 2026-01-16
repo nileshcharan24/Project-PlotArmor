@@ -121,7 +121,9 @@ def main():
 
     grad_acc_steps = config.get('gradient_accumulation_steps', getattr(args, 'gradient_accumulation_steps', 1))
     log_interval = max(1, args.log_interval)
-    checkpoint_path = f'./models/{selected_model}_best.pt'
+    # Absolute paths for saves to avoid ghost files
+    models_dir = PROJECT_ROOT / 'research' / 'models'
+    checkpoint_path = models_dir / f'{selected_model}_best.pt'
 
     import time
     import threading
@@ -153,17 +155,21 @@ def main():
         x, y = x.to(device), y.to(device)
         if args.debug:
             print(f"DEBUG: Step {global_step} x device: {x.device}, y device: {y.device}")
-        
+
         start_forward = time.time()
-        logits = model(x)
+        outputs = model(x, labels=y) if selected_model == 'gpt2' else {'logits': model(x), 'loss': None}
         forward_time = time.time() - start_forward
         if args.debug:
-            print(f"DEBUG: Step {global_step} forward pass time: {forward_time:.3f}s, logits device: {logits.device}")
-        
-        # Next-token prediction: shift logits and labels by one
-        logits_shifted = logits[:, :-1, :].contiguous()
-        y_shifted = y[:, 1:].contiguous()
-        loss = F.cross_entropy(logits_shifted.view(-1, config['vocab_size']), y_shifted.view(-1))
+            logdev = outputs['logits'].device if outputs.get('logits') is not None else 'n/a'
+            print(f"DEBUG: Step {global_step} forward pass time: {forward_time:.3f}s, logits device: {logdev}")
+
+        logits = outputs['logits']
+        loss = outputs.get('loss', None)
+        if loss is None:
+            # Fallback shifting if model did not return loss
+            logits_shifted = logits[:, :-1, :].contiguous()
+            y_shifted = y[:, 1:].contiguous()
+            loss = F.cross_entropy(logits_shifted.view(-1, config['vocab_size']), y_shifted.view(-1))
         if torch.isnan(loss) or torch.isinf(loss):
             print(f"ERROR: NaN or Inf loss detected at step {global_step}")
             break
@@ -193,10 +199,12 @@ def main():
             # Save best
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                os.makedirs('./models', exist_ok=True)
+                os.makedirs(models_dir, exist_ok=True)
                 torch.save(model.state_dict(), checkpoint_path)
+                if not os.path.exists(checkpoint_path):
+                    raise FileNotFoundError(f"Save failed at {checkpoint_path}")
                 best_saved = True
-                print(f"Best checkpoint saved to {checkpoint_path}")
+                print(f"Best checkpoint saved to {checkpoint_path.resolve()}")
 
         # Generation
         if (global_step + 1) % args.gen_interval == 0:
@@ -215,27 +223,40 @@ def main():
         perplexity = calculate_perplexity(model, val_loader, device, max_batches=10)
         val_loss = torch.log(torch.tensor(perplexity))
         logger.log(epoch, global_step, loss.item() * grad_acc_steps, val_loss.item(), perplexity)
-        os.makedirs('./models', exist_ok=True)
+        os.makedirs(models_dir, exist_ok=True)
         torch.save(model.state_dict(), checkpoint_path)
+        if not os.path.exists(checkpoint_path):
+            raise FileNotFoundError(f"Save failed at {checkpoint_path}")
         best_saved = True
-        print(f"Best checkpoint saved post-train to {checkpoint_path}")
+        print(f"Best checkpoint saved post-train to {checkpoint_path.resolve()}")
 
     print(f"Training complete. Results saved to: {logger.filename}")
     if os.path.exists(checkpoint_path):
-        print(f"Best model saved to: {checkpoint_path}")
+        print(f"Best model saved to: {checkpoint_path.resolve()}")
     else:
-        print(f"Warning: best model file not found at {checkpoint_path}")
+        print(f"Warning: best model file not found at {checkpoint_path.resolve()}")
 
     # Copy to Kaggle working for download if in Kaggle
     if os.path.exists('/kaggle/working'):
         import shutil
         kaggle_output = f"/kaggle/working/{os.path.basename(logger.filename)}"
-        shutil.copy(logger.filename, kaggle_output)
-        print(f"CSV copied to Kaggle output: {kaggle_output}")
+        try:
+            print(f"Copying {logger.filename} to {kaggle_output}...")
+            shutil.copy(logger.filename, kaggle_output)
+            print(f"CSV copied to Kaggle output: {kaggle_output}")
+        except Exception as e:
+            print(f"Failed to copy CSV to Kaggle output: {e}")
         if os.path.exists(checkpoint_path):
             model_output = f"/kaggle/working/{os.path.basename(checkpoint_path)}"
-            shutil.copy(checkpoint_path, model_output)
-            print(f"Model copied to Kaggle output: {model_output}")
+            try:
+                print(f"Copying {checkpoint_path} to {model_output}...")
+                shutil.copy(checkpoint_path, model_output)
+                if os.path.exists(model_output):
+                    print(f"Model copied to Kaggle output: {model_output}")
+                else:
+                    print(f"Warning: model not found after copy at {model_output}")
+            except Exception as e:
+                print(f"Failed to copy model to Kaggle output: {e}")
 
 
 if __name__ == "__main__":

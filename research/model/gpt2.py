@@ -82,8 +82,8 @@ class GPT2Model(nn.Module):
         self.ln_f = nn.LayerNorm(n_embd)
         self.lm_head = nn.Linear(n_embd, vocab_size, bias=False)
 
-    def forward(self, idx: torch.Tensor) -> torch.Tensor:
-        # Standard GPT-2 forward without implicit device moves; caller handles .to(device)
+    def forward(self, idx: torch.Tensor, labels: torch.Tensor = None) -> Dict[str, torch.Tensor]:
+        # Standard GPT-2 forward with optional causal LM loss; caller handles device
         device = idx.device
         _, T = idx.size()
         pos = torch.arange(0, T, dtype=torch.long, device=device)
@@ -94,7 +94,14 @@ class GPT2Model(nn.Module):
             x = block(x)
         x = self.ln_f(x)
         logits = self.lm_head(x)
-        return logits
+
+        loss = None
+        if labels is not None:
+            # Shift for causal LM
+            shift_logits = logits[:, :-1, :].contiguous()
+            shift_labels = labels[:, 1:].contiguous()
+            loss = F.cross_entropy(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+        return {'logits': logits, 'loss': loss}
 
 
 def get_baseline_gpt2(config: Dict[str, Any]) -> nn.Module:
