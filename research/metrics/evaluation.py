@@ -26,7 +26,8 @@ def calculate_perplexity(
             if max_batches is not None and i >= max_batches:
                 break
             x, y = x.to(device), y.to(device)
-            logits = model(x)
+            output = model(x)
+            logits = output['logits'] if isinstance(output, dict) and 'logits' in output else output
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1), reduction='sum')
             total_loss += loss.item()
             total_tokens += y.numel()

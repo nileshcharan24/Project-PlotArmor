@@ -30,4 +30,4 @@ MODEL_CONFIGS = {
 }
 
 # Default model selection
-DEFAULT_MODEL = "bdh"
+DEFAULT_MODEL = "gpt2"
