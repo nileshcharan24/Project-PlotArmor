@@ -76,12 +76,22 @@ class TextDataset(Dataset):
         return x, y
 
 
-def get_dataloaders(file_path: str, config: dict, batch_size: int = 4, train_ratio: float = 0.9, pretokenized_path: Optional[str] = None):
+def get_dataloaders(
+    file_path: str,
+    config: dict,
+    batch_size: int = 4,
+    train_ratio: float = 0.9,
+    pretokenized_path: Optional[str] = None,
+    num_workers: int = 4,
+    pin_memory: bool = True,
+    persistent_workers: bool = True,
+    prefetch_factor: int = 2,
+):
     """
     Returns train and val DataLoaders. If pretokenized_path is provided, dataset will load memmap.
+    Adds DataLoader tuning parameters to mitigate stalls.
     """
     dataset = TextDataset(file_path, config['context_len'], config['vocab_size'], pretokenized_path=pretokenized_path)
-    # Instead of random split, split by indices to avoid shuffling large dataset
     total_len = len(dataset)
     train_size = int(train_ratio * total_len)
     val_size = total_len - train_size
@@ -90,7 +100,15 @@ def get_dataloaders(file_path: str, config: dict, batch_size: int = 4, train_rat
     train_dataset = torch.utils.data.Subset(dataset, train_indices)
     val_dataset = torch.utils.data.Subset(dataset, val_indices)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    common_kwargs = dict(
+        batch_size=batch_size,
+        pin_memory=pin_memory,
+        num_workers=num_workers,
+        persistent_workers=persistent_workers if num_workers > 0 else False,
+        prefetch_factor=prefetch_factor if num_workers > 0 else None,
+    )
+
+    train_loader = DataLoader(train_dataset, shuffle=True, **common_kwargs)
+    val_loader = DataLoader(val_dataset, shuffle=False, **common_kwargs)
 
     return train_loader, val_loader
