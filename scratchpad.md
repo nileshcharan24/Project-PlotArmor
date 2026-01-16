@@ -18,7 +18,15 @@
 
 ## Current Status
 
-Modified dataset.py to tokenize text in 10MB chunks to prevent memory issues during encoding. Changes pushed for user to test on Kaggle.
+Modified dataset.py to tokenize text in 10MB chunks to prevent memory issues during encoding. Changes pushed for user to test on Kaggle. Fixed Vite 404 by adding root-level index.html in app/client. Dev server now runs on port 5174 due to port conflict. Verified HTTP 200 response from dev server root.
+Updated project-plotarmour.ipynb to remove pretokenization cell and point training to Kaggle dataset /kaggle/input/tinystories-pretokenized/tinystories_train.bin using kaggle_long_train.py.
+
+## Plan (2026-01-17) — Kaggle notebook pretokenized path & training UX
+
+1) Edit [project-plotarmour.ipynb](project-plotarmour.ipynb) to remove the pretokenization cell that ran `tools/pre_tokenize.py`.
+2) Update the training cell to call `!python research/utils/train.py --config research/config/kaggle_long_train.py --pretokenized_path /kaggle/input/tinystories-pretokenized/tinystories_train.bin`.
+3) Ensure config still uses kaggle_long_train.py (batch size 16, grad accumulation 4). Keep progress logging (tqdm/progress bar) and add early stopping hook if absent.
+4) Roughly estimate Kaggle P100 runtime for 900MB bin; propose utilization tweaks if GPU not saturated; ensure progress bar shows percent and loss.
 
 ## Latest Work (2026-01-16)
 
@@ -32,6 +40,14 @@ Modified dataset.py to tokenize text in 10MB chunks to prevent memory issues dur
 
 - Local quick test on small sample to validate memmap read path and truncation logic.
 - If needed, add notebook cell in project-plotarmour.ipynb to run tools/pre_tokenize.py on Kaggle before training.
+
+## New Task Plan (2026-01-17) — Fix Vite 404 at app/client
+
+1) Inspect Vite entry points and dev server config: verify [app/client/src/index.html](app/client/src/index.html) references `/src/main.jsx` and `#root`, and check [app/client/src/main.jsx](app/client/src/main.jsx) mounts React to `root`.
+2) Check Vite config and package scripts: ensure `npm run dev` uses Vite defaults (no custom base misconfiguration) and that dependencies are installed; review [app/client/package.json](app/client/package.json) for scripts.
+3) Run `npm run dev` in app/client to confirm server binds to 5173 and that the console shows no missing entry errors; if 404 persists, inspect [app/client/tailwind.config.js](app/client/tailwind.config.js) and public paths for misaligned base.
+4) Verify routing: ensure [app/client/src/App.jsx](app/client/src/App.jsx) renders content without relying on client-side routing that could 404; add minimal smoke test rendering.
+5) After fixes, rerun dev server, open http://localhost:5173/, and confirm page renders; document changes and update directory map if any files change.
 
 ## New Task Plan (2026-01-16) — Kaggle OOM + tokenizer warning
 

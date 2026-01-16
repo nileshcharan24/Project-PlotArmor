@@ -1,7 +1,7 @@
 # Project Context: BDH-GPU "Project PlotArmor"
 
 ## 1. Project Objective
-**Goal:** Build "Project PlotArmor"—a web application that demonstrates the superiority of the Biologically Inspired Dragon Hatchling (BDH) architecture over standard Transformers through controllability and logic validation.
+**Goal:** Build "Project PlotArmor"—a web application that demonstrates the superiority of the Biologically Inspired Dragon Hatchling (BDH) architecture over standard Transformers through controllability and logic validation. We'll use pytorch and FARM stack.
 
 **Core Demonstrations:**
 1.  **The "Hemisphere Slider" (Controllability):**
@@ -134,6 +134,8 @@ This section acts as the living map of the project. Update immediately upon file
 ├── .roomodes             # Mode definitions
 ├── app/
 │   ├── client/           # React Frontend
+│   │   ├── index.html    # Vite entry (root-level mirror for dev server)
+│   │   └── src/          # Frontend source
 │   └── server/           # Node.js/Express Backend
 │       └── index.js      # Express server
 ├── dist/                 # Bundled code for Kaggle (generated)
