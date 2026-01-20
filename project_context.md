@@ -174,3 +174,13 @@ This section acts as the living map of the project. Update immediately upon file
 │   └── models/           # Saved Checkpoints (.pt) (generated)
 └── tools/                # Utility scripts
     └── bundle_kaggle.py  # Kaggle bundling script
+## Project Folder Structure
+
+- app/
+  - client/  # React frontend
+  - server/  # FastAPI backend
+- models/    # Model checkpoint files (.pt)
+- research/  # Research code and model definitions (read-only)
+- tools/     # Utility scripts
+- project_context.md  # Project context and documentation
+- requirements.txt  # Python dependencies
