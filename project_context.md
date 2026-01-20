@@ -136,8 +136,10 @@ This section acts as the living map of the project. Update immediately upon file
 │   ├── client/           # React Frontend
 │   │   ├── index.html    # Vite entry (root-level mirror for dev server)
 │   │   └── src/          # Frontend source
-│   └── server/           # Node.js/Express Backend
-│       └── index.js      # Express server
+│   └── server/           # FastAPI Backend
+│       ├── main.py       # FastAPI application
+│       ├── inference.py  # Model inference logic
+│       └── requirements.txt
 ├── dist/                 # Bundled code for Kaggle (generated)
 ├── project_context.md    # Source of Truth (Architecture, Math, Structure)
 ├── requirements.txt      # Python Dependencies
@@ -177,8 +179,8 @@ This section acts as the living map of the project. Update immediately upon file
 ## Project Folder Structure
 
 - app/
-  - client/  # React frontend
-  - server/  # FastAPI backend
+  - client/  # React frontend (Vite)
+  - server/  # FastAPI backend (Python)
 - models/    # Model checkpoint files (.pt)
 - research/  # Research code and model definitions (read-only)
 - tools/     # Utility scripts

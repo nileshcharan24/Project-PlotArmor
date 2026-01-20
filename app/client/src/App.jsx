@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import HemisphereSlider from './components/HemisphereSlider';
 import SplitView from './components/SplitView';
+import LogicValidator from './components/LogicValidator';
+import Card from './components/Card';
+import Textarea from './components/Textarea';
+import Button from './components/Button';
 
 const App = () => {
   const [prompt, setPrompt] = useState('');
@@ -9,50 +13,86 @@ const App = () => {
   const [bdhOutput, setBdhOutput] = useState('');
   const [gpt2Output, setGpt2Output] = useState('');
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setLoading(true);
+    // Clear previous outputs before generating
     setBdhOutput('');
     setGpt2Output('');
-    setTimeout(() => {
-      // Mock outputs
-      setBdhOutput(
-        <p>
-          BDH output for prompt: <strong>"{prompt}"</strong> with logic-creativity balance at <strong>{sliderValue}</strong>
-        </p>
-      );
-      setGpt2Output(
-        <p>
-          GPT-2 output for prompt: <strong>"{prompt}"</strong> with logic-creativity balance at <strong>{sliderValue}</strong>
-        </p>
-      );
+
+    try {
+      // NOTE: Using '/generate' to match your main.py configuration. 
+      // If you changed main.py to prefix '/api', change this URL to 'http://localhost:8000/api/generate'
+      const response = await fetch('http://localhost:8000/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          context: prompt,
+          slider_value: sliderValue, // Passing the current slider value
+          max_tokens: 50,
+          temperature: 1.0,
+          top_k: 50
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Update state with the real data from the backend
+      setBdhOutput(data.bdh_text);
+      setGpt2Output(data.gpt_text);
+
+    } catch (error) {
+      console.error("Failed to generate text:", error);
+      alert("Failed to connect to the backend. Is the server running?");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <header className="max-w-4xl mx-auto mb-8">
-        <h1 className="text-4xl font-bold text-center mb-2">Project PlotArmor</h1>
-        <p className="text-center text-gray-600">Beyond the Black Box: Controllable Neural Storytelling</p>
+    <div className="min-h-screen bg-[#0b1220] text-gray-300 p-8">
+      <header className="text-center mb-12">
+        <h1 className="text-5xl font-bold text-white">Project PlotArmor</h1>
+        <p className="text-gray-400 mt-2">Beyond the Black Box: Controllable Neural Storytelling</p>
       </header>
-      <main className="max-w-4xl mx-auto flex flex-col gap-6">
-        <textarea
-          className="w-full p-3 border rounded shadow-sm resize-none"
-          rows={4}
-          placeholder="Enter your story prompt here..."
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          disabled={loading}
-        />
-        <HemisphereSlider value={sliderValue} onChange={(e) => setSliderValue(Number(e.target.value))} />
-        <button
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-          onClick={handleGenerate}
-          disabled={loading || prompt.trim() === ''}
-        >
-          {loading ? 'Generating...' : 'Generate'}
-        </button>
-        <SplitView leftContent={bdhOutput} rightContent={gpt2Output} />
+
+      <main className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
+        {/* Story Generation Card */}
+        <Card title="Story Generation">
+          <HemisphereSlider
+            value={sliderValue}
+            onChange={(e) => setSliderValue(Number(e.target.value))}
+          />
+          <Textarea
+            rows={4}
+            placeholder="Enter your story prompt here..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            disabled={loading}
+          />
+          <Button
+            onClick={handleGenerate}
+            disabled={loading || prompt.trim() === ''}
+          >
+            {loading ? 'Generating...' : 'Generate'}
+          </Button>
+          <SplitView
+            leftContent={bdhOutput}
+            rightContent={gpt2Output}
+            loading={loading}
+            sliderValue={sliderValue}
+          />
+        </Card>
+
+        {/* Logic Validator Card */}
+        <Card title="Logic Validator">
+          <LogicValidator />
+        </Card>
       </main>
     </div>
   );

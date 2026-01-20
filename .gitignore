@@ -33,3 +33,5 @@ app/server/dist
 # OS files
 .DS_Store
 Thumbs.db
+app/server/__pycache__/
+app/server/venv/

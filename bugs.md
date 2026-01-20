@@ -1,21 +1,8 @@
----
-# Bugs and Fixes Registry
+# Bug Tracking
 
-This file records major errors/bugs with symptoms, root causes, fixes, and prevention notes.
+## Resolved
 
----
-
-## Bug: Vite 404 on dev server
-- **Symptoms:** Dev server ran but browser showed 404 on localhost:5173.
-- **Root Cause:** Missing root-level index.html for Vite dev server.
-- **Fix:** Added [app/client/index.html](app/client/index.html:1) as root entry point.
-- **Prevention:** Ensure Vite root index.html exists for dev.
-
----
-
-## Bug: Pre-tokenization step redundant
-- **Symptoms:** Repeated tokenization slowed training startup.
-- **Root Cause:** Dataset already pretokenized and published as Kaggle dataset.
-- **Fix:** Removed pre-tokenization cell in [project-plotarmour.ipynb](project-plotarmour.ipynb:39); training now uses `/kaggle/input/tinystories-pretokenized/tinystories_train.bin`.
-- **Prevention:** Prefer pretokenized datasets when available; avoid duplicate tokenization steps.
-
+### [Fixed] Continuous Slider Logic
+- **Date:** 2026-01-17
+- **Issue:** The "Story Generation" slider was acting as a discrete switch (0-40% BDH, 60-100% GPT-2, 41-59% Hybrid) instead of a continuous control.
+- **Fix:** Refactored `inference.py` to use linear interpolation of probabilities between BDH and GPT-2 models based on slider value. Updated Frontend labels to correctly reflect "Creativity" (0%) vs "Logic" (100%).

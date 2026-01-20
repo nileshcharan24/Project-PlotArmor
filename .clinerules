@@ -1,48 +1,35 @@
-# BDH Project Guidelines
+# BDH "Dev Mode" Guidelines
 
-## 1. Source of Truth
-* Always refer to `project_context.md` for architecture details (Equations, Dimensions).
-* **Do not** hallucinate different parameters; stick to the N, D, L, H defined in the context or config.
+## 1. Role & Stack
+* **Role:** Full-Stack Engineer building "Project PlotArmor".
+* **Backend:** FastAPI (`app/server`), PyTorch (Inference only).
+* **Frontend:** React + Vite + Tailwind (`app/client`).
+* **Models:** Treat `research/models/*.pt` as read-only artifacts.
 
-## 2. Coding Standards
-* **Framework:** Use PyTorch.
-* **Device Agnostic:** All tensors must be on the same `device` (handle `cuda` vs `cpu` explicitly).
-* **Typing:** Always include Python type hints (e.g., `def forward(self, x: torch.Tensor) -> torch.Tensor:`).
-* **Comments:** * File headers must describe the file's purpose.
-    * Classes and functions must have docstrings explaining inputs/outputs.
-    * Complex math blocks must cite the relevant Equation from `project_context.md`.
+## 2. Environment Safety (CRITICAL)
+* **Python:** ALWAYS use the explicit venv path to avoid system conflicts:
+  `.\venv\Scripts\python.exe <script>`
+* **Node:** Run frontend commands inside `app/client/`.
+* **Pathing:** The backend (`app/server/`) needs to import from `research/`. Ensure `sys.path` is handled correctly in scripts before imports.
 
-## 3. Testing & Verification
-* **Mandatory Check:** Before marking a coding task as done, generate and run a small `assert` test script.
-* **Shape Verification:** Specifically verify that tensor shapes match Equation (8) during forward passes.
+## 3. Workflow (The "Scratchpad" Rule)
+* **Plan First:** Before coding, write a 1-sentence plan in `scratchpad.md`.
+* **Update Status:** Keep the "Current Status" in `scratchpad.md` accurate so we don't lose track of the build state.
 
-## 4. Workflow & Context (The "Scratchpad" Rule)
-* **Plan First:** Before starting any task, propose a plan in `scratchpad.md` and wait for user approval.
-* **Track Progress:** After completing any sub-task, update `scratchpad.md` to reflect the new state. This file MUST act as the project's persistent progress bar and offline git log.
-* **Status Updates:** Ensure the "Current Status" section of `scratchpad.md` is always accurate before ending a turn.
+## 4. Coding Standards
+* **Backend:**
+  * Use absolute paths or dynamic root detection (`os.getcwd()`). Do not rely on relative paths like `../../` blindly.
+  * Separate *Inference Logic* (`inference.py`) from *API Routes* (`main.py`).
+* **Frontend:**
+  * Use Functional Components with Hooks.
+  * Use Tailwind CSS for all styling (no `.css` files unless global).
 
-## 5. Hardware & Pipeline
-* **Dual-Environment:** Code must run on both a Local Laptop (CPU/Weak GPU) and Kaggle (T4 x2).
-* **The Toggle:** Implement a `config.py` with a simple toggle (e.g., `ENV = "LOCAL"` vs `ENV = "KAGGLE"`) that automatically adjusts batch sizes, dimensions, and paths.
-* **Kaggle Pipeline:** When `ENV = "KAGGLE"`, the system should be prepared to bundle code for upload to Kaggle.
+## 5. Verification
+* **Backend Test:** Before connecting the UI, curl/test the API endpoint locally: `http://localhost:8000/docs`.
+* **Frontend Test:** Ensure `npm run dev` starts without errors before marking a task complete.
 
-## 6. Modularity
-* **Config-Driven:** Never hardcode hyperparameters. All "magic numbers" must live in `config.py`.
-* **Swappable Components:** It should be possible to swap models (e.g., BDH vs GPT-2 Baseline) by changing one line in the config.
-
-## 7. Directory Hygiene
-* **Living Map:** Section 5 of `project_context.md` contains the Directory Structure.
-* **Update Rule:** Whenever you create, delete, or move a file/folder, you **MUST** immediately update Section 5 of `project_context.md` to reflect the new state. This is not optional.
-
-## 8. Environment Safety (MANDATORY)
-* **Venv Enforcement:** Never run `python <script>` directly. You must always use the virtual environment executable to avoid dependency issues.
-* **Command Pattern:** Use: `.\venv\Scripts\python.exe <script_name>`
-* **Reason:** This ensures the GPU-enabled PyTorch version is always used, regardless of the terminal's activation state.
-
-## 9. Bug Registry (MANDATORY)
-
-* Maintain a `bugs.md` file as the single source of truth for all major or recurring bugs.
-* For every non-trivial bug, add:
-  * Error/symptoms, root cause, exact fix, and prevention note.
-* Always consult `bugs.md` before debugging.
-* When a fix is taken from `bugs.md`, explicitly reference that entry in your workflow.
+## 6. Directory Hygiene
+* **Structure:**
+  * `app/server/` -> Python/FastAPI code.
+  * `app/client/` -> React code.
+  * `research/` -> **READ ONLY** (Do not modify training code during Dev phase).

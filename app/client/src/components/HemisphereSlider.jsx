@@ -8,11 +8,18 @@ import React from 'react';
  * - onChange: function (event handler for slider change)
  */
 const HemisphereSlider = ({ value, onChange }) => {
+  const gradientStyle = {
+    // Blue (#2563eb) fills from the left as Logic increases.
+    // The background/empty part is Gray (#4b5563).
+    background: `linear-gradient(to right, #2563eb ${value}%, #4b5563 ${value}%)`,
+  };
+
   return (
-    <div className="w-full max-w-xl mx-auto px-4">
-      <div className="flex justify-between mb-1 text-sm font-medium text-gray-700">
-        <span>Logic (Left Brain)</span>
-        <span>Creativity (Right Brain)</span>
+    <div className="w-full">
+      <div className="flex justify-between text-sm font-medium text-gray-400 mb-1">
+        <span>Creativity (GPT-2)</span>
+        <span>{value}% Logic</span>
+        <span>Logic (BDH)</span>
       </div>
       <input
         type="range"
@@ -20,10 +27,9 @@ const HemisphereSlider = ({ value, onChange }) => {
         max="100"
         value={value}
         onChange={onChange}
-        className="w-full h-3 rounded-lg appearance-none cursor-pointer bg-gradient-to-r from-blue-500 to-pink-500"
-        style={{
-          backgroundSize: '100% 100%',
-        }}
+        className="w-full h-2 rounded-lg appearance-none cursor-pointer slider-thumb"
+        style={gradientStyle}
+        aria-label="Logic to Creativity slider"
       />
     </div>
   );

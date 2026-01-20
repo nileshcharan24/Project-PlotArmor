@@ -72,7 +72,11 @@ class GPT2Block(nn.Module):
 class GPT2Model(nn.Module):
     def __init__(self, config: Dict[str, Any]):
         super().__init__()
-        vocab_size = config['vocab_size']
+        vocab_size = config.get('vocab_size', 50257)
+        max_position_embeddings = config.get('max_position_embeddings', 1024)
+        n_layer = config.get('n_layer', 12)
+        n_head = config.get('n_head', 12)
+        n_embd = config.get('n_embd', 768)
         n_embd = config['n_embd']
         n_layer = config['n_layer']
         self.wte = nn.Embedding(vocab_size, n_embd)
